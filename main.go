@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
+	"os"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -24,8 +25,11 @@ var temp = template.Must(template.ParseGlob("templates/*.html"))
 
 func connectDB() *mongo.Client {
 	// Use the SetServerAPIOptions() method to set the Stable API version to 1
+
+	db_password := os.Getenv("DB_PASSWORD")
 	serverAPI := options.ServerAPI(options.ServerAPIVersion1)
-	opts := options.Client().ApplyURI("mongodb+srv://alissonskt:UMFybDMljV2aLxqL@api-cluster.luhg2mi.mongodb.net/?retryWrites=true&w=majority").SetServerAPIOptions(serverAPI)
+	stringConnection := fmt.Sprintf("mongodb+srv://alissonskt:%s@api-cluster.luhg2mi.mongodb.net/?retryWrites=true&w=majority", db_password)
+	opts := options.Client().ApplyURI(stringConnection).SetServerAPIOptions(serverAPI)
 
 	// Create a new client and connect to the server
 	client, err := mongo.Connect(context.TODO(), opts)
@@ -35,7 +39,7 @@ func connectDB() *mongo.Client {
 	}
 
 	// Send a ping to confirm a successful connection
-	if err := client.Database("admin").RunCommand(context.TODO(), bson.D{{"ping", 1}}).Err(); err != nil {
+	if err := client.Database("admin").RunCommand(context.TODO(), bson.D{{Key: "ping", Value: 1}}).Err(); err != nil {
 		panic(err)
 	}
 	fmt.Println("Pinged your deployment. You successfully connected to MongoDB!")
