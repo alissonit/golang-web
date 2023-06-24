@@ -12,11 +12,19 @@ import (
 )
 
 type Product struct {
-	Id          primitive.ObjectID
+	Id          string `bson:"_id"`
 	Name        string
 	Description string
 	Price       float64
 	Quantity    int
+}
+
+func prepareToDatabase(id string, db *mongo.Client) (*mongo.Collection, primitive.D) {
+	collection := db.Database("alura-web").Collection("products")
+	objectId, _ := primitive.ObjectIDFromHex(id)
+	filter := bson.D{{"_id", objectId}}
+	return collection, filter
+
 }
 
 func GetAllProducts() []Product {
@@ -84,5 +92,66 @@ func CreateNewProduct(name string, description string, price float64, quantity i
 			panic(err)
 		}
 	}()
+}
 
+func DeleteProduct(id string) {
+
+	db := db.ConnectDB()
+
+	collection, filter := prepareToDatabase(id, db)
+
+	_, err := collection.DeleteOne(context.TODO(), filter)
+
+	if err != nil {
+		panic(err.Error())
+	}
+
+	defer func() {
+		if err = db.Disconnect(context.TODO()); err != nil {
+			panic(err)
+		}
+	}()
+}
+
+func EditProduct(id string) Product {
+
+	db := db.ConnectDB()
+
+	collection, filter := prepareToDatabase(id, db)
+
+	productToUpdate := Product{}
+
+	resutlt := collection.FindOne(context.TODO(), filter)
+
+	resutlt.Decode(&productToUpdate)
+
+	defer db.Disconnect(context.TODO())
+
+	return productToUpdate
+}
+
+func UpdateProduct(id string, name string, description string, price float64, quantity int) {
+	db := db.ConnectDB()
+
+	collection, filter := prepareToDatabase(id, db)
+
+	updateValue := bson.D{{"$set", bson.D{
+		{"Name", name},
+		{"Description", description},
+		{"Price", price},
+		{"Quantity", quantity},
+	},
+	}}
+
+	_, err := collection.UpdateOne(context.TODO(), filter, updateValue)
+
+	if err != nil {
+		panic(err.Error())
+	}
+
+	defer func() {
+		if err = db.Disconnect(context.TODO()); err != nil {
+			panic(err)
+		}
+	}()
 }
