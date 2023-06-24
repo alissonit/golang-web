@@ -17,8 +17,7 @@ func ConnectDB() *mongo.Client {
 	db_user := os.Getenv("DB_USER")
 	db_host := os.Getenv("DB_HOST")
 	serverAPI := options.ServerAPI(options.ServerAPIVersion1)
-	stringConnection := fmt.Sprintf(
-		"mongodb+srv://%s:%s@%s/?retryWrites=true&w=majority", db_user, db_password, db_host)
+	stringConnection := fmt.Sprintf("%s:%s@%s/?retryWrites=true&w=majority", db_user, db_password, db_host)
 
 	opts := options.Client().ApplyURI(stringConnection).SetServerAPIOptions(serverAPI)
 
